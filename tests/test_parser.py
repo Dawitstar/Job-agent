@@ -68,3 +68,11 @@ def test_gmail_payload_decoding():
     assert msg.received_at.year == 2026
     assert msg.html == "<p>hi</p>"
     assert len(parse_email(msg)) == 3
+
+
+def test_load_eml():
+    from job_agent.parser import load_eml
+
+    msg = load_eml(FIXTURES / "sample-alert.eml")
+    assert msg.sender.endswith("<jobalerts-noreply@linkedin.com>")
+    assert [j.job_id for j in parse_email(msg)] == ["3812345678", "3899990001", "3899990002"]

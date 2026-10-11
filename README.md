@@ -39,7 +39,7 @@ cp cv.example.md cv.md             # edit
 ```bash
 job-agent fetch                                   # last 7 days of alerts
 job-agent fetch --query 'from:jobalerts-noreply@linkedin.com newer_than:1d' --max 10
-job-agent parse saved-alert.eml                   # offline, no Gmail needed
+job-agent parse tests/fixtures/sample-alert.eml    # offline demo, no Gmail needed
 ```
 
 ## Configuration (environment variables)
