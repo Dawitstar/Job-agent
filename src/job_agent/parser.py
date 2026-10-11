@@ -35,8 +35,8 @@ NOISE_RE = re.compile(
     r"\b\d+\s+(connections?|(school )?alumni)\b|\bworks? here\b|"
     r"^apply with (your )?(resume|profile)|^be among the first|"
     r"\b\d+\s+(minutes?|hours?|days?|weeks?)\s+ago\b|"
-    r"top applicant|in your network|response insights|^reposted|"
-    r"^\$[\d,.]+[kK]?\b|/yr\b|/hr\b)",
+    r"top applicant|in your network|response insights|^reposted|^fast growing$|"
+    r"^[A-Z]{0,3}[$€£][\d,.]+[kK]?\b|/\s*(yr|year|hr|hour|month)\b)",
     re.IGNORECASE,
 )
 
@@ -56,8 +56,14 @@ def canonical_job_url(job_id: str) -> str:
     return f"https://www.linkedin.com/jobs/view/{job_id}/"
 
 
+ALERT_SENDER = "jobalerts-noreply@linkedin.com"
+
+
 def is_linkedin_job_alert(msg: EmailMessage) -> bool:
-    return "linkedin.com" in msg.sender.lower()
+    """True for alerts sent by LinkedIn, and for alerts forwarded from another inbox."""
+    if "linkedin.com" in msg.sender.lower():
+        return True
+    return ALERT_SENDER in msg.text or ALERT_SENDER in msg.html
 
 
 def parse_email(msg: EmailMessage) -> list[JobPosting]:
@@ -201,9 +207,13 @@ def _card_container(anchor, job_id: str):
 
 
 def _anchor_title(anchors) -> str:
-    texts = [a.get_text(" ", strip=True) for a in anchors]
-    texts = [t for t in texts if t and not NOISE_RE.search(t) and not t.lower().startswith("view")]
-    return texts[0] if texts else ""
+    # Some templates wrap the whole card in one link, so use the first string
+    # inside a link, not the link's full text.
+    for a in anchors:
+        for text in a.stripped_strings:
+            if not NOISE_RE.search(text) and not text.lower().startswith("view"):
+                return text
+    return ""
 
 
 # --- offline helper -----------------------------------------------------------

@@ -69,7 +69,7 @@ Try a wider search:
 
 ```bash
 job-agent fetch                                        # last 7 days (default)
-job-agent fetch --query 'from:jobalerts-noreply@linkedin.com newer_than:30d' --max 100
+job-agent fetch --query '"jobalerts-noreply@linkedin.com" newer_than:30d' --max 100
 ```
 
 ---
@@ -82,7 +82,7 @@ job-agent fetch --query 'from:jobalerts-noreply@linkedin.com newer_than:30d' --m
 | `OAuth client file not found` | `credentials.json` isn't in the folder you ran the command from. Move it there, or set `JOB_AGENT_CREDENTIALS=/path/to/credentials.json`. |
 | `Gmail API has not been used in project … or it is disabled` | Do step 2 for the same project, then wait a minute. |
 | Browser opens again after about a week | Expected in Testing mode: Google expires the saved login after 7 days. Sign in again; the old token is replaced automatically. |
-| `0 job(s)` | Paste the query into the Gmail search box. If nothing matches, your alerts come from a different sender. Open one, copy the sender address, and use it with `--query 'from:<sender> newer_than:30d'`. |
+| `0 job(s)` | Paste the query from `JOB_AGENT_GMAIL_QUERY` (see README) into the Gmail search box. Forwarded alerts are found too, as long as the forward keeps the original `jobalerts-noreply@linkedin.com` line. If nothing matches, your alerts come from a different sender. Open one, copy the sender address, and use it with `--query 'from:<sender> newer_than:30d'`. |
 | Running on a server with no browser | Do the first run on a computer with a browser, then copy `token.json` to the server. |
 
 ## Revoking access

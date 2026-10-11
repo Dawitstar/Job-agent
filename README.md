@@ -35,7 +35,7 @@ Follow **[docs/GMAIL_SETUP.md](docs/GMAIL_SETUP.md)**. In short: create a Google
 
 ```bash
 job-agent fetch                                   # last 7 days of alerts
-job-agent fetch --query 'from:jobalerts-noreply@linkedin.com newer_than:1d' --max 10
+job-agent fetch --query '"jobalerts-noreply@linkedin.com" newer_than:1d' --max 10
 job-agent parse tests/fixtures/sample-alert.eml    # offline demo, no Gmail needed
 ```
 
@@ -48,7 +48,7 @@ job-agent parse tests/fixtures/sample-alert.eml    # offline demo, no Gmail need
 | `JOB_AGENT_TOKEN` | `$JOB_AGENT_HOME/token.json` |
 | `JOB_AGENT_DB` | `$JOB_AGENT_HOME/data/jobs.db` |
 | `JOB_AGENT_PROFILE` / `JOB_AGENT_CV` | `profile.md` / `cv.md` |
-| `JOB_AGENT_GMAIL_QUERY` | `from:jobalerts-noreply@linkedin.com newer_than:7d` |
+| `JOB_AGENT_GMAIL_QUERY` | `(from:jobalerts-noreply@linkedin.com OR "jobalerts-noreply@linkedin.com") newer_than:7d` (also matches alerts forwarded from another inbox) |
 | `JOB_AGENT_MODEL` | `claude-sonnet-5-5` |
 
 ## How parsing works

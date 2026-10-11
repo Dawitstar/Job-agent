@@ -76,3 +76,30 @@ def test_load_eml():
     msg = load_eml(FIXTURES / "sample-alert.eml")
     assert msg.sender.endswith("<jobalerts-noreply@linkedin.com>")
     assert [j.job_id for j in parse_email(msg)] == ["3812345678", "3899990001", "3899990002"]
+
+
+def test_forwarded_alert_with_card_wrapping_link():
+    # Yahoo forward: text part has no links, sender is not LinkedIn, and each
+    # card is wrapped in one big link around the title link.
+    from job_agent.parser import is_linkedin_job_alert
+
+    msg = EmailMessage(id="fw", subject="Fw: Operations Manager at Contoso Foods",
+                       sender="someone@yahoo.com", received_at=None,
+                       text="Begin forwarded message:\n| Operations Manager |\n Contoso Foods · Toronto, ON\n",
+                       html=(FIXTURES / "forwarded_alert.html").read_text())
+    assert is_linkedin_job_alert(msg)
+    jobs = parse_email(msg)
+    assert [(j.job_id, j.title, j.company, j.location) for j in jobs] == [
+        ("4000000001", "Operations Manager", "Contoso Foods", "Toronto, ON (On-site)"),
+        ("4000000002", "Site Director", "Fabrikam", "Mississauga, ON"),
+    ]
+    assert jobs[0].extra == ["CA$80K-CA$90K / year", "Actively recruiting", "Easy Apply"]
+    assert jobs[1].extra == ["13 connections", "Fast growing"]
+
+
+def test_non_alert_is_rejected():
+    from job_agent.parser import is_linkedin_job_alert
+
+    msg = EmailMessage(id="x", subject="hi", sender="friend@yahoo.com", received_at=None,
+                       text="lunch?", html="")
+    assert not is_linkedin_job_alert(msg)

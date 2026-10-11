@@ -34,7 +34,8 @@ def load_settings() -> Settings:
         cv_file=_path("JOB_AGENT_CV", root / "cv.md"),
         gmail_query=os.environ.get(
             "JOB_AGENT_GMAIL_QUERY",
-            "from:jobalerts-noreply@linkedin.com newer_than:7d",
+            # The quoted address also matches alerts forwarded from another inbox.
+            '(from:jobalerts-noreply@linkedin.com OR "jobalerts-noreply@linkedin.com") newer_than:7d',
         ),
         model=os.environ.get("JOB_AGENT_MODEL", "claude-sonnet-5-5"),
     )
