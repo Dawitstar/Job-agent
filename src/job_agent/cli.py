@@ -19,33 +19,74 @@ def _print_jobs(jobs: list[JobPosting]) -> None:
     print(f"\n{len(jobs)} job(s)")
 
 
-def cmd_fetch(args: argparse.Namespace) -> int:
+def _jobs_from_gmail(query: str | None, max_results: int) -> list[JobPosting]:
     from .gmail_client import build_service, fetch_messages
 
     settings = load_settings()
     service = build_service(settings.credentials_file, settings.token_file)
-    query = args.query or settings.gmail_query
+    query = query or settings.gmail_query
 
     jobs: dict[str, JobPosting] = {}
     n_messages = 0
-    for msg in fetch_messages(service, query, max_results=args.max):
+    for msg in fetch_messages(service, query, max_results=max_results):
         if not is_linkedin_job_alert(msg):
             continue
         n_messages += 1
         for job in parse_email(msg):
             jobs.setdefault(job.job_id, job)
 
-    print(f"Parsed {n_messages} alert email(s) for query: {query}\n")
-    _print_jobs(list(jobs.values()))
+    print(f"Parsed {n_messages} alert email(s) for query: {query}\n", file=sys.stderr)
+    return list(jobs.values())
+
+
+def _jobs_from_eml(paths: list[str]) -> list[JobPosting]:
+    jobs: dict[str, JobPosting] = {}
+    for path in paths:
+        for job in parse_email(load_eml(Path(path))):
+            jobs.setdefault(job.job_id, job)
+    return list(jobs.values())
+
+
+def cmd_fetch(args: argparse.Namespace) -> int:
+    _print_jobs(_jobs_from_gmail(args.query, args.max))
     return 0
 
 
 def cmd_parse(args: argparse.Namespace) -> int:
-    jobs: dict[str, JobPosting] = {}
-    for path in args.files:
-        for job in parse_email(load_eml(Path(path))):
-            jobs.setdefault(job.job_id, job)
-    _print_jobs(list(jobs.values()))
+    _print_jobs(_jobs_from_eml(args.files))
+    return 0
+
+
+def cmd_score(args: argparse.Namespace) -> int:
+    import anthropic
+
+    from .digest import format_digest
+    from .scorer import Scorer, ScoringError
+
+    settings = load_settings()
+    for f in (settings.profile_file, settings.cv_file):
+        if not f.exists():
+            print(f"Missing {f}. Copy {f.stem}.example.md to {f.name} and fill it in.", file=sys.stderr)
+            return 1
+
+    jobs = _jobs_from_eml(args.eml) if args.eml else _jobs_from_gmail(args.query, args.max)
+    if not jobs:
+        print("No jobs found.", file=sys.stderr)
+        return 0
+
+    scorer = Scorer(settings.profile_file.read_text(), settings.cv_file.read_text(), settings.model)
+    results = []
+    for i, job in enumerate(jobs, 1):
+        print(f"Scoring {i}/{len(jobs)}: {job.title} @ {job.company}", file=sys.stderr)
+        try:
+            results.append((job, scorer.score(job)))
+        except (ScoringError, anthropic.APIConnectionError, anthropic.RateLimitError,
+                anthropic.InternalServerError) as e:
+            # Skip this job; bad credentials or a bad request still stop the run.
+            print(f"  skipped: {e}", file=sys.stderr)
+
+    print()
+    print(format_digest(results))
     return 0
 
 
@@ -57,6 +98,12 @@ def build_parser() -> argparse.ArgumentParser:
     f.add_argument("--query", help="Gmail search query (default from JOB_AGENT_GMAIL_QUERY)")
     f.add_argument("--max", type=int, default=50, help="Max emails to read (default 50)")
     f.set_defaults(func=cmd_fetch)
+
+    s = sub.add_parser("score", help="Score jobs against profile.md and cv.md and print a ranked digest")
+    s.add_argument("--eml", nargs="+", help="Score jobs from saved .eml files instead of Gmail")
+    s.add_argument("--query", help="Gmail search query (default from JOB_AGENT_GMAIL_QUERY)")
+    s.add_argument("--max", type=int, default=50, help="Max emails to read (default 50)")
+    s.set_defaults(func=cmd_score)
 
     e = sub.add_parser("parse", help="Parse saved .eml files offline (no Gmail access)")
     e.add_argument("files", nargs="+")

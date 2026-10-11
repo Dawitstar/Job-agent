@@ -13,7 +13,7 @@ dependencies = [
     "google-auth-oauthlib>=1.1",
     "google-auth>=2.23",
     "beautifulsoup4>=4.12",
-    "anthropic>=0.40",
+    "anthropic>=1.13",
 ]
 
 [project.optional-dependencies]

@@ -12,9 +12,9 @@ Reads LinkedIn job-alert emails from your Gmail, pulls out each job, scores how 
 |---|---|---|
 | Gmail OAuth + fetch | `gmail_client.py` | done |
 | Alert email parser | `parser.py` | done |
-| Fit scoring (Anthropic API) | `scorer.py` | stub |
+| Fit scoring (Anthropic API) | `scorer.py` | done |
 | SQLite storage | `db.py` | stub |
-| Ranked digest | `digest.py` | stub |
+| Ranked digest | `digest.py` | done |
 
 ## Setup
 
@@ -37,7 +37,18 @@ Follow **[docs/GMAIL_SETUP.md](docs/GMAIL_SETUP.md)**. In short: create a Google
 job-agent fetch                                   # last 7 days of alerts
 job-agent fetch --query '"jobalerts-noreply@linkedin.com" newer_than:1d' --max 10
 job-agent parse tests/fixtures/sample-alert.eml    # offline demo, no Gmail needed
+job-agent score                                   # score Gmail alerts, print ranked digest
+job-agent score --eml saved-alert.eml             # score jobs from saved emails
 ```
+
+## Scoring
+
+`job-agent score` sends each job's title, company, location and badges, plus `profile.md` and `cv.md`, to Claude (`claude-sonnet-5-5` by default). It gets back JSON with a 0-100 `score` and short `reasons`.
+
+- Set `ANTHROPIC_API_KEY` first. Get a key at <https://console.anthropic.com/>.
+- The alert emails have no job descriptions, so scores are a first-pass filter. Open the link before deciding.
+- The profile and CV are sent as a cached system prompt, so after the first job each request mostly pays for the job text.
+- If a safety classifier declines a request, the API retries it on Anthropic's recommended fallback model (`fallbacks: "default"`).
 
 ## Configuration (environment variables)
 
