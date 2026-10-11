@@ -18,6 +18,7 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 def get_credentials(credentials_file: Path, token_file: Path):
     """Load cached credentials, refreshing or running the browser login as needed."""
+    from google.auth.exceptions import RefreshError
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
@@ -30,8 +31,13 @@ def get_credentials(credentials_file: Path, token_file: Path):
         return creds
 
     if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
+        try:
+            creds.refresh(Request())
+        except RefreshError:
+            # Apps in "Testing" mode get refresh tokens that expire after 7 days.
+            creds = None
+
+    if not (creds and creds.valid):
         if not credentials_file.exists():
             raise FileNotFoundError(
                 f"OAuth client file not found: {credentials_file}. "

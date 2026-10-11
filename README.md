@@ -27,10 +27,7 @@ cp cv.example.md cv.md             # edit
 
 ### Gmail OAuth
 
-1. In the [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the **Gmail API**.
-2. Set up the OAuth consent screen (External, add yourself as a test user).
-3. Create credentials of type **OAuth client ID → Desktop app**, download the JSON and save it as `credentials.json` in the project root.
-4. Run `job-agent fetch`. A browser window opens for consent the first time. The token is cached in `token.json`.
+Follow **[docs/GMAIL_SETUP.md](docs/GMAIL_SETUP.md)**. In short: create a Google Cloud project, enable the Gmail API, add yourself as a test user, create a *Desktop app* OAuth client, save it as `credentials.json`, then run `job-agent fetch`.
 
 `credentials.json`, `token.json`, `profile.md`, `cv.md` and `data/` are git-ignored.
 
