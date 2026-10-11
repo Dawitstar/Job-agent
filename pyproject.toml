@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job-agent"
+version = "0.1.0"
+description = "Read LinkedIn job-alert emails from Gmail, score fit with Claude, and print a ranked digest."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-api-python-client>=2.100",
+    "google-auth-oauthlib>=1.1",
+    "google-auth>=2.23",
+    "beautifulsoup4>=4.12",
+    "anthropic>=0.40",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+job-agent = "job_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

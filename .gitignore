@@ -1,0 +1,19 @@
+# Secrets / OAuth
+credentials.json
+token.json
+.env
+
+# Personal data
+profile.md
+cv.md
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+build/
+dist/
